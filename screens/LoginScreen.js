@@ -1,8 +1,10 @@
-import {signIn} from "../AuthManager";
+import {signIn, signUp, subscribeToAuthChanges} from "../AuthManager";
 import { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
 import { Button } from '@rneui/themed';
 
+import { useDispatch } from 'react-redux';
+import {addUser} from "../features/AuthSlice";
 
 function SigninBox({navigation}) {
   const [email, setEmail] = useState('');
@@ -47,9 +49,9 @@ function SigninBox({navigation}) {
           onPress={async () => {
             try {
               await signIn(email, password);
-              navigation.navigate('Home');
+              // navigation.navigate('Home');
             } catch(error) {
-              Alert.alert("Sign In Error", error.message,[{ text: "OK" }])
+              Alert.alert("You Were Unable to Get in", `The robot said: ${error.message}`, [{ text: "OK" }])
             }
           }}
         >
@@ -61,12 +63,113 @@ function SigninBox({navigation}) {
 }
 
 
+function SignupBox({navigation}) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+
+  const dispatch = useDispatch(); // make sure it's in SignupBox()!!!
+
+  return (
+    <View style={styles.loginContainer}>
+      <Text style={styles.loginHeaderText}>Sign Up</Text>
+      <View style={styles.loginRow}>
+        <View style={styles.loginLabelContainer}>
+          <Text style={styles.loginLabelText}>Display Name: </Text>
+        </View>
+        <View style={styles.loginInputContainer}>
+          <TextInput
+            style={styles.loginInputBox}
+            placeholder='enter display name'
+            autoCapitalize='none'
+            spellCheck={false}
+            onChangeText={text=>setDisplayName(text)}
+            value={displayName}
+          />
+        </View>
+      </View>
+      <View style={styles.loginRow}>
+        <View style={styles.loginLabelContainer}>
+          <Text style={styles.loginLabelText}>Email: </Text>
+        </View>
+        <View style={styles.loginInputContainer}>
+          <TextInput
+            style={styles.loginInputBox}
+            placeholder='enter email address'
+            autoCapitalize='none'
+            spellCheck={false}
+            onChangeText={text=>setEmail(text)}
+            value={email}
+          />
+        </View>
+      </View>
+      <View style={styles.loginRow}>
+        <View style={styles.loginLabelContainer}>
+          <Text style={styles.loginLabelText}>Password: </Text>
+        </View>
+        <View style={styles.loginInputContainer}>
+          <TextInput
+            style={styles.loginInputBox}
+            placeholder='enter password'
+            autoCapitalize='none'
+            spellCheck={false}
+            secureTextEntry={true}
+            onChangeText={text=>setPassword(text)}
+            value={password}
+          />
+        </View>
+      </View>
+      <View style={styles.loginRow}>
+        <Button
+          onPress={async () => {
+            try {
+              const newUser = await signUp(displayName, email, password);
+              dispatch(addUser(newUser));
+            } catch(error) {
+              Alert.alert("Sign Up Error", error.message, [{ text: "OK" }])
+            }
+          }}
+        >
+          Sign Up
+        </Button>
+      </View>
+    </View>
+  );
+}
+
 function LoginScreen({navigation}) {
+  const [loginMode, setLoginMode] = useState(true);
+
+  useEffect(()=> {
+    subscribeToAuthChanges(navigation);
+  }, []);
 
   return (
     <View style={styles.container}>
       <View style={styles.bodyContainer}>
-        <SigninBox navigation={navigation}/>
+        {loginMode ?
+          <SigninBox navigation={navigation}/>
+          :
+          <SignupBox navigation={navigation}/>
+        }
+      </View>
+
+      <View styles={styles.modeSwitchContainer}>
+        { loginMode ?
+          <Text>New user?
+            <Text
+              onPress={()=>{setLoginMode(!loginMode)}}
+              style={{color: 'blue'}}> Sign up </Text>
+            instead!
+          </Text>
+          :
+          <Text>Returning user?
+            <Text
+              onPress={()=>{setLoginMode(!loginMode)}}
+              style={{color: 'blue'}}> Sign in </Text>
+            instead!
+          </Text>
+        }
       </View>
     </View>
   );
