@@ -1,4 +1,4 @@
-const firebaseConfig = {
+export const firebaseConfig = {
   apiKey: "AIzaSyBNAniv_BlRetarZW0hQYvgbW1EEZAwNf8",
   authDomain: "chat-app-5d928.firebaseapp.com",
   projectId: "chat-app-5d928",
