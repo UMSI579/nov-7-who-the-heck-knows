@@ -1,6 +1,6 @@
 import {signOut, getAuthUser} from '../AuthManager';
 import { Button } from '@rneui/themed';
-import { View, Text, StyleSheet, Alert, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Alert, FlatList, TouchableOpacity } from 'react-native';
 import {subscribeToUserUpdates} from "../features/authSlice";
 import {useDispatch, useSelector} from "react-redux";
 import {useEffect} from "react";
@@ -18,7 +18,7 @@ function HomeScreen({navigation}) {
   return (
     <View style={styles.container}>
       <Text>
-        You're signed in { getAuthUser().displayName }!
+        You're signed in { currentAuthUser?.displayName }!
       </Text>
 
       <Text>
@@ -28,11 +28,17 @@ function HomeScreen({navigation}) {
         <FlatList
           data={users}
           renderItem={({item}) => {
-            if (item.key === currentAuthUser.uid) {
+            if (item.key === currentAuthUser?.uid) {
               return (<View/>)
             } else {
               return (
-                <Text>{item.displayName}</Text>
+                <TouchableOpacity
+                  onPress={()=>{
+                    navigation.navigate('Chat')
+                  }}
+                >
+                  <Text>{item.displayName}</Text>
+                </TouchableOpacity>
               )
             }
           }}

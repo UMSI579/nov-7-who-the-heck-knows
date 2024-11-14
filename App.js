@@ -5,6 +5,8 @@ import LoginScreen from './screens/LoginScreen';
 import { Provider } from 'react-redux';
 import authSlice from './features/authSlice';
 import { configureStore } from '@reduxjs/toolkit';
+import ChatScreen from './screens/ChatScreen';
+
 
 const store = configureStore({
   reducer: {
@@ -23,6 +25,7 @@ function App() {
                          screenOptions={{ headerShown: false }}>
           <Stack.Screen name='Login' component={LoginScreen}/>
           <Stack.Screen name='Home' component={HomeScreen}/>
+          <Stack.Screen name='Chat' component={ChatScreen}/>
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>
