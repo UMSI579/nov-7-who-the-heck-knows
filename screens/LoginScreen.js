@@ -4,7 +4,7 @@ import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
 import { Button } from '@rneui/themed';
 
 import { useDispatch } from 'react-redux';
-import {addUser} from "../features/AuthSlice";
+import {addUser} from "../features/authSlice";
 
 function SigninBox({navigation}) {
   const [email, setEmail] = useState('');
