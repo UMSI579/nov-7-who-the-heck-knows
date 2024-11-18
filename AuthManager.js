@@ -67,10 +67,8 @@ const subscribeToAuthChanges = (navigation) => {
 
   unsubscribeFromAuthChanges = onAuthStateChanged(auth, (user) => {
     if (user) {
-      console.log('signed in! user:', user);
       navigation.navigate('Home');
     } else {
-      console.log('user is signed out!');
       navigation.navigate('Login');
     }
   })
