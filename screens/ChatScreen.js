@@ -1,27 +1,22 @@
-
+import { useDispatch, useSelector } from 'react-redux';
 import { Button, Input, Icon } from '@rneui/themed';
 import { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, TouchableOpacity }
   from 'react-native';
+import {addCurrentChatMessage} from "../features/authSlice";
 
 function ChatScreen({navigation, route}) {
-  const currentUser = "Bob";
-  const otherUser = "Alice";
-  const dummyChat = [
-    {
-      author: "Alice",
-      message: "Hello, Bob",
-      timestamp: Date.now()
-    },
-    {
-      author: "Bob",
-      message: "Why hi there, Alice",
-      timestamp: Date.now() + 1
-    }
-  ];
-
-  const [messages, setMessages] = useState(dummyChat);
+  const {currentUserId, otherUserId} = route.params;
   const [inputText, setInputText] = useState('');
+
+
+  // use selectors to get all the data we need for the screen
+  const currentChat = useSelector(state => state.authSlice.currentChat);
+  const currentUser = useSelector(state => state.authSlice.users.find(u=> u.key === currentUserId));
+  const otherUser = useSelector(state => state.authSlice.users.find(u => u.key === otherUserId));
+
+  const messages = currentChat?.messages ?? []; // guard against no messages yet
+  const dispatch = useDispatch();
 
   return (
     <View style={styles.container} >
@@ -46,7 +41,7 @@ function ChatScreen({navigation, route}) {
 
           <View style={styles.headerCenter}>
             <Text style={styles.headerText}>
-              Chat with {otherUser}
+              Chat with {otherUser.displayName}
             </Text>
           </View>
         </View>
@@ -97,11 +92,11 @@ function ChatScreen({navigation, route}) {
           <Button
             buttonStyle={styles.sendButton}
             onPress={()=>{
-              setMessages(messages.concat({
-                author: currentUser,
+              dispatch(addCurrentChatMessage({
+                author: currentUser.key,
                 message: inputText,
-                timestamp: Date.now()
-              }));
+                timestamp: new Date()
+              }))
               setInputText('');
             }}
           >

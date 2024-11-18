@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { initializeApp, getApps } from 'firebase/app';
-import { setDoc, getDocs, addDoc, doc, getFirestore, collection, query, where, onSnapshot } from 'firebase/firestore';
+import { setDoc, getDocs, addDoc, doc, getFirestore, collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 import { firebaseConfig } from '../Secrets';
 
 let app;
@@ -12,19 +12,18 @@ if (apps.length == 0) {
 }
 const db = getFirestore(app);
 
-
 let snapshotUnsubscribe = undefined;
 export const subscribeToUserUpdates = (dispatch) => {
   if (snapshotUnsubscribe) {
     snapshotUnsubscribe();
   }
-    snapshotUnsubscribe = onSnapshot(collection(db, 'users'), usersSnapshot => {
-      const updatedUsers = usersSnapshot.docs.map(uSnap => {
-        console.log(uSnap.data());
-        return uSnap.data(); // already has key?
-      });
-      dispatch(loadUsers(updatedUsers));
+  snapshotUnsubscribe = onSnapshot(collection(db, 'users'), usersSnapshot => {
+    const updatedUsers = usersSnapshot.docs.map(uSnap => {
+      console.log(uSnap.data());
+      return uSnap.data(); // already has key?
     });
+    dispatch(loadUsers(updatedUsers));
+  });
 }
 
 export const addUser = createAsyncThunk(
@@ -52,15 +51,15 @@ export const loadUsers = createAsyncThunk(
   }
 )
 
+let chatSnapshotUnsub = undefined;
 export const addOrSelectChat = createAsyncThunk(
   'chat/addOrSelect',
-  async({user1id, user2id}) => {
-q    try {
+  async({user1id, user2id}, {dispatch}) => {
+    try {
       const chatQuery = query(collection(db, 'chats'),
         where('participants', 'array-contains', user1id),
       );
       const results = await getDocs(chatQuery);
-      console.log('results, 63', results)
       /*
         Since we want to find a chat that has user1 and user2
         as "participants", ideally we would do this in a single
@@ -84,7 +83,6 @@ q    try {
       const chatSnap = results.docs?.find(
         elem => elem.data().participants.includes(user2id),
       );
-      console.log('chat snap 87', chatSnap)
       let theChat;
 
       if (!chatSnap) { // we DIDN'T find a match, create a new chat
@@ -101,6 +99,35 @@ q    try {
         }
         console.log('found a matching chat:', theChat);
       }
+      // initial dispatch to add currentChat to reducer
+      dispatch(authSlice.actions.setCurrentChat(theChat))
+
+
+      if (chatSnapshotUnsub) {
+        chatSnapshotUnsub();
+        chatSnapshotUnsub = undefined;
+      }
+      const q = query(
+        collection(db, 'chats', theChat.id, 'messages'),
+        orderBy('timestamp', 'asc')
+      );
+      chatSnapshotUnsub = onSnapshot(
+        q,
+        (messagesSnapshot) => {
+          const messages = messagesSnapshot.docs.map(msgSnap => {
+            const message = msgSnap.data();
+            return {
+              ...message,
+              timestamp: message.timestamp.seconds,
+              id: msgSnap.id
+            }
+          }); // grab the messages from the snapshot, then dispatch to reducer
+          dispatch(authSlice.actions.setCurrentChat({
+            ...theChat,
+            messages: messages
+          }))
+        }
+      );
     }
     catch(e) {
       console.log('error finding chats', e)
@@ -110,14 +137,34 @@ q    try {
 )
 
 
+export const addCurrentChatMessage = createAsyncThunk(
+  'chat/addMessage',
+  async (message, {getState}) => {
+    try {
+      const currentChat = getState().authSlice.currentChat;
+      const messageCollection = collection(db, 'chats', currentChat.id, 'messages');
+      await addDoc(messageCollection, message); // no need to dispatch
+    } catch (e) {
+      console.log('could not add message', e)
+    }
+  }
+)
+
+
 export const authSlice = createSlice({
   name: 'auth',
   initialState: {
     users: [],
+    currentChat: {}
   },
   // reducers is a mandatory argument even if all of our reducers
   // are in extraReducers
-  reducers: [],
+  reducers: {
+    setCurrentChat: (state, action) => {
+      console.log('setting current chat to', action.payload);
+      state.currentChat = action.payload;
+    }
+  },
   extraReducers: (builder) => {
     builder.addCase(addUser.fulfilled, (state, action) => {
       state.users = [...state.users, action.payload]
