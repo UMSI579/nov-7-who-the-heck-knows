@@ -3,7 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import { Provider } from 'react-redux';
-import authSlice from './features/AuthSlice';
+import authSlice from './features/authSlice';
 import { configureStore } from '@reduxjs/toolkit';
 
 const store = configureStore({
