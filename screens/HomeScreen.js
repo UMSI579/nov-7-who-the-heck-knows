@@ -1,7 +1,7 @@
 import {signOut, getAuthUser} from '../AuthManager';
 import { Button } from '@rneui/themed';
 import { View, Text, StyleSheet, Alert, FlatList, TouchableOpacity } from 'react-native';
-import {subscribeToUserUpdates} from "../features/authSlice";
+import {subscribeToUserUpdates, addOrSelectChat, unsubscribeFromUsers} from "../features/authSlice";
 import {useDispatch, useSelector} from "react-redux";
 import {useEffect} from "react";
 
@@ -34,7 +34,14 @@ function HomeScreen({navigation}) {
               return (
                 <TouchableOpacity
                   onPress={()=>{
-                    navigation.navigate('Chat')
+                    dispatch(addOrSelectChat({
+                      user1id: currentAuthUser.uid,
+                      user2id: item.key,
+                    }));
+                    navigation.navigate('Chat', {
+                      currentUserId: currentAuthUser.uid,
+                      otherUserId: item.key
+                    })
                   }}
                 >
                   <Text>{item.displayName}</Text>
@@ -47,6 +54,7 @@ function HomeScreen({navigation}) {
       <Button
         onPress={async () => {
           try {
+            unsubscribeFromUsers();
             await signOut();
             // navigation.navigate('Login');
           } catch (error) {
